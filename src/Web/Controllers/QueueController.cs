@@ -1,8 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+using ApplicationCore;
+using ApplicationCore.BackgroundJobs;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -27,14 +26,14 @@ namespace Web.Controllers
             return new QueueInfo
             {
                 Date = DateTime.UtcNow,
-                QueueLength = this.queue.Length
+                QueueLength = queue.Length
             };
         }
 
         [HttpPost]
         public IActionResult Add([Required] ItemToBeProcessed item)
         {
-            logger.LogInformation("Adding {id} to the queue", item.Id);
+            logger.LogInformation("Adding item with id '{id}' to the queue", item.Id);
 
             queue.QueueBackgroundWorkItem(item);
 
