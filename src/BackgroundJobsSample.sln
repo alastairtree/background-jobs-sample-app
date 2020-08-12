@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "config", "config", "{9657E8
 		..\README.md = ..\README.md
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FoundatioFxAdapter", "FoundatioFxAdapter\FoundatioFxAdapter.csproj", "{67A10C79-A510-43E4-9D52-1E87B492A9AB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,18 @@ Global
 		{6703D208-62E8-4E2B-8C8F-EE22B5F6D245}.Release|x64.Build.0 = Release|Any CPU
 		{6703D208-62E8-4E2B-8C8F-EE22B5F6D245}.Release|x86.ActiveCfg = Release|Any CPU
 		{6703D208-62E8-4E2B-8C8F-EE22B5F6D245}.Release|x86.Build.0 = Release|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Debug|x64.Build.0 = Debug|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Debug|x86.Build.0 = Debug|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Release|x64.ActiveCfg = Release|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Release|x64.Build.0 = Release|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Release|x86.ActiveCfg = Release|Any CPU
+		{67A10C79-A510-43E4-9D52-1E87B492A9AB}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

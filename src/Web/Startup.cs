@@ -1,4 +1,5 @@
 using ApplicationCore;
+using Foundatio.Queues;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -22,6 +23,15 @@ namespace Web
             services.AddControllers();
 
             services.AddJob<DoSomethingComplexJob, ItemToBeProcessed>(Configuration);
+
+            // optional - switch to a foundatio queue here for alternative implementation
+
+            // services.AddFoundatioQueueAdapter<ItemToBeProcessed, InMemoryQueue<ItemToBeProcessed>>();
+
+            // OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, RedisQueue<ItemToBeProcessed>>();
+            // OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, AzureServiceBusQueue<ItemToBeProcessed>>();
+            // OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, AzureStorageQueue<ItemToBeProcessed>>();
+            // OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, x => new AzureStorageQueue<ItemToBeProcessed>>(...);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

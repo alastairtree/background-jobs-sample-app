@@ -14,7 +14,7 @@ namespace ApplicationCore.BackgroundJobs
         private readonly IBackgroundJobQueue<TJobItem> queue;
         private readonly IServiceProvider services;
         private Task backgroundSave;
-        private bool inprogress = false;
+        private bool inprogress;
 
         public BackgroundJobsServiceCore(IServiceProvider services,
             IBackgroundJobQueue<TJobItem> queue,
@@ -26,15 +26,60 @@ namespace ApplicationCore.BackgroundJobs
             this.options = options;
         }
 
+        void EnsurePeriodicBackgroundSave(CancellationToken stoppingToken)
+        {
+            if (!queue.NeedsSaving) return;
+
+            if (backgroundSave == null || backgroundSave.IsCompleted)
+            {
+                logger.LogInformation("Starting periodic queue saving");
+
+                backgroundSave = Task.Run(async () =>
+                {
+                    while (!stoppingToken.IsCancellationRequested)
+                    {
+                        try
+                        {
+                            var delay = TimeSpan.FromMilliseconds(options.Value
+                                .PeriodicBackgroundSaveIntervalMilliseconds);
+                            await Task.Delay(
+                                delay,
+                                stoppingToken);
+
+                            await PersistQueue();
+                            var length = await queue.GetLength();
+
+                            if (length == 0 && !inprogress)
+                            {
+                                logger.LogInformation("Stopping periodic queue saving as queue is empty");
+                                break;
+                            }
+
+                            logger.LogInformation("Periodic save of queue to storage complete. Next save in {time:#}s",
+                                delay.TotalSeconds);
+                        }
+                        catch (OperationCanceledException)
+                        {
+                        }
+                    }
+                }, stoppingToken);
+            }
+        }
+
         public async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            logger.LogInformation("BackgroundJobService started. Checking for previous execution queue that may need to be resumed...");
+            logger.LogInformation(
+                "BackgroundJobService started. Checking for previous execution queue that may need to be resumed...");
 
             await queue.Resume();
 
+            //TODO: may wish to periodically handle items that have been dequeued but not completed
+            //      they are available from queue.GetDeadLetterItems()
+
             while (!stoppingToken.IsCancellationRequested)
             {
-                logger.LogInformation("Current queue length is {length}", queue.Length);
+                var length = await queue.GetLength();
+                logger.LogInformation("Current queue length is {length}", length);
 
                 inprogress = false;
                 var workItem = await queue.DequeueAsync(stoppingToken);
@@ -50,19 +95,22 @@ namespace ApplicationCore.BackgroundJobs
                             scope.ServiceProvider
                                 .GetRequiredService<IBackgroundJob<TJobItem>>();
 
-                        await scopedProcessingService.ProcessItem(stoppingToken, workItem);
+                        await scopedProcessingService.ProcessItem(stoppingToken, workItem.Value);
+
+                        //item done so remove it from queue
+                        await workItem.Complete();
                     }
                 }
                 catch (OperationCanceledException ex)
                 {
-                    // put the cancelled item back on the queue
-                    queue.QueueBackgroundWorkItem(workItem);
                     logger.LogWarning(ex,
-                        "Cancelled work item id {WorkItem} before completion. It will re re-queued", workItem);
+                        "Cancelled work item {WorkItem} before completion. It will re-queued automatically",
+                        workItem.Value);
 
                     //save the queue before shutting down
-                    logger.LogInformation("Queue length is {length} - Saving before shutdown", queue.Length);
-                    await queue.Save();
+                    var lengthAsCancelled = await queue.GetLength();
+                    logger.LogInformation("Queue length is {length} - Saving before shutdown", lengthAsCancelled);
+                    await PersistQueue();
                 }
                 catch (Exception ex)
                 {
@@ -72,47 +120,17 @@ namespace ApplicationCore.BackgroundJobs
             }
         }
 
-        void EnsurePeriodicBackgroundSave(CancellationToken stoppingToken)
-        {
-            if (backgroundSave == null || backgroundSave.IsCompleted)
-            {
-                logger.LogInformation("Starting periodic queue saving");
-
-                backgroundSave = Task.Run(async () =>
-                {
-                    while (!stoppingToken.IsCancellationRequested)
-                    {
-                        try
-                        {
-                            var delay = TimeSpan.FromMilliseconds(options.Value.PeriodicBackgroundSaveIntervalMilliseconds);
-                            await Task.Delay(
-                                delay,
-                                stoppingToken);
-
-                            await queue.Save();
-                            if (queue.Length == 0 && !inprogress)
-                            {
-                                logger.LogInformation("Stopping periodic queue saving as queue is empty");
-                                break;
-                            }
-                            else
-                            {
-                                logger.LogInformation("Periodic save of queue to storage complete. Next save in {time:#}s",delay.TotalSeconds);
-                            }
-                        }
-                        catch (OperationCanceledException)
-                        {
-                        }
-                    }
-                }, stoppingToken);
-            }
-        }
-
 
         public async Task OnStop(CancellationToken stoppingToken)
         {
             logger.LogInformation("BackgroundJobService stopped");
-            await queue.Save();
+            await PersistQueue();
+        }
+
+        private async Task PersistQueue()
+        {
+            if (queue.NeedsSaving)
+                await queue.Save();
         }
     }
 }

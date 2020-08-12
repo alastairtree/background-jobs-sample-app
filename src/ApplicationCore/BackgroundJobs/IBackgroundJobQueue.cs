@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -5,10 +6,12 @@ namespace ApplicationCore.BackgroundJobs
 {
     public interface IBackgroundJobQueue<TJobItem>
     {
-        int Length { get; }
-        void QueueBackgroundWorkItem(TJobItem id);
-        Task<TJobItem> DequeueAsync(CancellationToken cancellationToken);
-        Task Save();
+        bool NeedsSaving { get; }
+        Task<IQueueEntry<TJobItem>> DequeueAsync(CancellationToken cancellationToken);
+        Task<ICollection<TJobItem>> GetDeadLetterItems();
+        Task<long> GetLength();
+        Task QueueBackgroundWorkItem(TJobItem id);
         Task Resume();
+        Task Save();
     }
 }

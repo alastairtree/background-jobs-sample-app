@@ -7,6 +7,9 @@
   <ItemGroup>
     <ProjectReference Include="..\ApplicationCore\ApplicationCore.csproj" />
     <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+
+    <!--Only needed if using a foundatio provided queue-->
+    <ProjectReference Include="..\FoundatioFxAdapter\FoundatioFxAdapter.csproj" />
   </ItemGroup>
 
 

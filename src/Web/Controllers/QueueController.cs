@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Threading.Tasks;
 using ApplicationCore;
 using ApplicationCore.BackgroundJobs;
 using Microsoft.AspNetCore.Mvc;
@@ -20,16 +21,6 @@ namespace Web.Controllers
             this.queue = queue;
         }
 
-        [HttpGet]
-        public QueueInfo Get()
-        {
-            return new QueueInfo
-            {
-                Date = DateTime.UtcNow,
-                QueueLength = queue.Length
-            };
-        }
-
         [HttpPost]
         public IActionResult Add([Required] ItemToBeProcessed item)
         {
@@ -38,6 +29,19 @@ namespace Web.Controllers
             queue.QueueBackgroundWorkItem(item);
 
             return Accepted();
+        }
+
+        [HttpGet]
+        public async Task<QueueInfo> Get()
+        {
+            var queueLength = await queue.GetLength();
+            var deadLetterItems = await queue.GetDeadLetterItems();
+            return new QueueInfo
+            {
+                Date = DateTime.UtcNow,
+                QueueLength = queueLength,
+                DeadLetterLength = deadLetterItems.Count
+            };
         }
     }
 }

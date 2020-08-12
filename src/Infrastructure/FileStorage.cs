@@ -26,6 +26,22 @@ namespace Infrastructure
             logger.LogInformation("Using job resume file to {filePath}", filePath);
         }
 
+        public async Task<TItem[]> Get()
+        {
+            if (!Directory.Exists(Path.GetDirectoryName(filePath)) || !File.Exists(filePath))
+                return Array.Empty<TItem>();
+
+            string json;
+            using (var sourceReader = File.OpenText(filePath))
+            {
+                json = await sourceReader.ReadToEndAsync();
+            }
+
+            var jobItems = json.Trim().Length > 0 ? serializer.Deserialize(json) : Array.Empty<TItem>();
+
+            return jobItems;
+        }
+
         public async Task Save(TItem[] items)
         {
             var dirtyData = items.Any() || File.Exists(filePath);
@@ -43,22 +59,6 @@ namespace Infrastructure
                     }
                 }
             }
-        }
-
-        public async Task<TItem[]> Get()
-        {
-            if (!Directory.Exists(Path.GetDirectoryName(filePath)) || !File.Exists(filePath))
-                return Array.Empty<TItem>();
-
-            string json;
-            using (var sourceReader = File.OpenText(filePath))
-            {
-                json = await sourceReader.ReadToEndAsync();
-            }
-
-            var jobItems = json.Trim().Length > 0 ? serializer.Deserialize(json) : Array.Empty<TItem>();
-
-            return jobItems;
         }
     }
 }

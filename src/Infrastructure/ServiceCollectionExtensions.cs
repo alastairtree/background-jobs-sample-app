@@ -35,7 +35,7 @@ namespace Microsoft.Extensions.DependencyInjection
             services.TryAddSingleton(typeof(BackgroundJobsServiceCore<>));
 
             // single instance of the queue per queue item type
-            services.AddSingleton(typeof(IBackgroundJobQueue<>), typeof(BackgroundJobQueue<>));
+            services.AddSingleton(typeof(IBackgroundJobQueue<>), typeof(InMemoryBackgroundJobQueue<>));
 
             // new instance of each job generated in a scope by BackgroundJobService
             services.AddScoped<IBackgroundJob<TJobItem>, TJob>();

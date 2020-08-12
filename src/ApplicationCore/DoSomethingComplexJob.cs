@@ -16,6 +16,8 @@ namespace ApplicationCore
 
         public async Task ProcessItem(CancellationToken stoppingToken, ItemToBeProcessed item)
         {
+            if (item == null) return;
+
             var executionCount = 0;
             var maxTimes = 3;
 

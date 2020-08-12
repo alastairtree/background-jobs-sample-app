@@ -39,6 +39,13 @@ Features:
 - Background jobs services are registered safely with the aspnet server host using IHostedService
 - Implemented following the Clean Architecture style, targeting netstandard
 - Efficient, low resource cost to run. No polling, timers or CPU utilisation on idle.
+- Implmented as plain c# and zero dependencies, but...
+- Comes with an adapter (See FoundatioFxAdapter) that allows you to swap out the queue implementation with one from Foundatio so can easily also support
+    - Redis
+    - Service Bus
+    - Azure Storage
+    - AWS SQS
+    - See https://github.com/FoundatioFx/Foundatio
 
 More info:
 
@@ -73,12 +80,29 @@ IBackgroundJobQueue<ItemToBeProcessed> queue = (..... from constructor)
 queue.QueueBackgroundWorkItem(123);
 ```
 
+## Change to use an external queue such as Azure Service Bus or AWS SQS
+
+Using the provided adapter you can use dependency injection to switch to any backing queue store supported by [FoundatioFx](https://github.com/FoundatioFx/Foundatio).
+
+Register your new queue implementation after the job registration in startup.cs
+
+```csharp
+services.AddJob<YourJob, int>(Configuration);
+
+// optional - switch to a foundatio queue here for service bus 
+services.AddFoundatioQueueAdapter<ItemToBeProcessed, InMemoryQueue<ItemToBeProcessed>>();
+// OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, RedisQueue<ItemToBeProcessed>>();
+// OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, AzureServiceBusQueue<ItemToBeProcessed>>();
+// OR services.AddFoundatioQueueAdapter<ItemToBeProcessed, AzureStorageQueue<ItemToBeProcessed>>();
+
+```
+
 ## Limitations
 
-* With many nodes each instance in a web farm will manages their own queue rather than distribute load.
-* Uses local file storage - you could re-implement IStorage for a database if desired
-* Ungraceful process termination may not have time to save the queue so some data loss possible.
-* Assumes queue items are serialisable
+* With many nodes each instance in a web farm will manages their own queue rather than distribute load when using the in memory queue. You may want to swap to a redis queue or similar.
+* Saves in-memory queues using local file storage - you could re-implement IStorage for a cloud blobs/db or similar
+* Ungraceful process termination may not have time to save the queue so some data loss possible. Refactor to use peek-lock & complete to fix if needed.
+* Assumes queue items are fully serialisable to JSON for Save/Resume feature
 * Background thread uses a single thread so queue length could explode with slow jobs and sufficient incoming requests
 
 ## Other background queues to consider
